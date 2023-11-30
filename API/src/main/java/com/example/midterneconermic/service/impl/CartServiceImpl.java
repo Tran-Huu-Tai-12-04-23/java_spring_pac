@@ -5,6 +5,9 @@ import com.example.midterneconermic.model.Product;
 import com.example.midterneconermic.repository.ProductRepository;
 import com.example.midterneconermic.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,10 +23,12 @@ public class IProductService implements ProductService {
         Optional<Product> optionalProduct = productRepository.findById(productId);
         return optionalProduct.orElse(null);
     }
-
     @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<Product> getAllProducts(int page, int size) {
+        System.out.println(page);
+        System.out.println(size);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        return productRepository.findAllByIsDeleteFalse(pageable).toList();
     }
 
     @Override

@@ -1,13 +1,8 @@
 package com.example.midterneconermic.controller;
 
 
-import com.example.midterneconermic.dto.AccountRequest;
 import com.example.midterneconermic.dto.ErrorResponse;
-import com.example.midterneconermic.dto.JWTAuthenticationResponse;
-import com.example.midterneconermic.dto.RefreshTokenRequest;
-import com.example.midterneconermic.model.Account;
 import com.example.midterneconermic.model.Product;
-import com.example.midterneconermic.service.AuthenticationService;
 import com.example.midterneconermic.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +13,12 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/app/products")
+@RequestMapping("/api/v1/app/admin/products")
 @RequiredArgsConstructor
 public class ProductController {
 
     private final ProductService productService;
 
-    @Secured({"ROLE_ADMIN", "ROLE_USER"})
     @GetMapping("/{idProduct}")
     public ResponseEntity<?> getProduct(@PathVariable long idProduct) {
         try {
@@ -37,27 +31,25 @@ public class ProductController {
         }
     }
 
-    @Secured("ROLE_ADMIN")
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<?> createProduct(@RequestBody Product newProduct) {
         try {
-            productService.addProduct(newProduct);
-            return ResponseEntity.ok("Product created successfully!");
-        } catch (Exception e) {
+            Product product = productService.addProduct(newProduct);
+            return ResponseEntity.ok(product);
+        } catch (RuntimeException err) {
             ErrorResponse errorResponse = new ErrorResponse();
-            errorResponse.setMessage(e.getMessage());
+            errorResponse.setMessage(err.getMessage());
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
-    @Secured("ROLE_ADMIN")
-    @PutMapping("/{idProduct}")
-    public ResponseEntity<?> updateProduct(@PathVariable long idProduct, @RequestBody Product updatedProduct) {
+    @PutMapping("/update/{productId}")
+    public ResponseEntity<?> updateProduct(@PathVariable long productId, @RequestBody Product updatedProduct) {
         try {
             // Set the ID of the updated product
-            updatedProduct.setId(idProduct);
-            productService.updateProduct(updatedProduct);
-            return ResponseEntity.ok("Product updated successfully!");
+            updatedProduct.setId(productId);
+            Product product = productService.updateProduct(updatedProduct);
+            return ResponseEntity.ok(product);
         } catch (Exception e) {
             ErrorResponse errorResponse = new ErrorResponse();
             errorResponse.setMessage(e.getMessage());
@@ -65,11 +57,10 @@ public class ProductController {
         }
     }
 
-    @Secured("ROLE_ADMIN")
-    @DeleteMapping("/{idProduct}")
-    public ResponseEntity<?> deleteProduct(@PathVariable long idProduct) {
+        @DeleteMapping("/remove/{productId}")
+    public ResponseEntity<?> deleteProduct(@PathVariable Long productId) {
         try {
-            productService.deleteProduct(idProduct);
+            productService.deleteProduct(productId);
             return ResponseEntity.ok("Product deleted successfully!");
         } catch (Exception e) {
             ErrorResponse errorResponse = new ErrorResponse();
@@ -78,12 +69,13 @@ public class ProductController {
         }
     }
 
-    @Secured({"ROLE_ADMIN", "ROLE_USER"})
     @GetMapping
-    public ResponseEntity<?> getAllProducts() {
-        System.out.println("Hello");
+    public ResponseEntity<?> getAllProduct(
+            @RequestParam(name = "page", required = false, defaultValue = "0") Integer page,
+            @RequestParam(name = "size", required = false, defaultValue = "20") Integer size
+    ) {
         try {
-            List<Product> products = productService.getAllProducts();
+            List<Product> products = productService.getAllProducts(page, size);
             return ResponseEntity.ok(products);
         } catch (ResponseStatusException e) {
             ErrorResponse errorResponse = new ErrorResponse();
@@ -91,4 +83,5 @@ public class ProductController {
             return ResponseEntity.badRequest().body(errorResponse);
         }
     }
+
 }
